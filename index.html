@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>Chat Room</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    body{
+      margin-top:50px;
+    }
+
+    #messageBoard{
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div id="userLogin" class="row">
+      <div id="userLogin" class="row">
+        <div class="col-sm-3">&nbsp;
+        </div>
+        <div class="col-sm-6">
+          <h2>Welcome to the Chat!</h2>
+        </div>
+        <div class="col-sm-3">&nbsp;
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-3">&nbsp;
+        </div>
+        <div class="col-sm-6">
+          <form id="loginForm">
+            <div class="form-group">
+              <label>Enter your name</label>
+              <input class="form-control" id="username" required />
+              <br />
+              <input type="submit" class="btn btn-primary" value="Send" />
+            </div>
+          </form>
+        </div>
+        <div class="col-sm-3">&nbsp;
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="messageBoard">
+      <div class="col-sm-4">
+        <h3>Chat Rooms</h3>
+        <br />
+        <div class="form-group">
+          <label for="roomselect">Select Room:</label>
+          <select class="form-control" id="roomselect">
+          </select>
+        </div>
+        <br>
+        <button class="btn btn-primary" id="addroom">Add new chat room</button>
+      </div>
+
+      <div class="col-sm-8">
+        <div>
+          <h4 id="chatheader">You're currently not connected to a chatroom</h4>
+        </div>
+        <div style="overflow:scroll; max-height: 500px; min-height: 500px;" id="chatContainer">
+          <div class="chat" id="chat"></div>
+        </div>
+        <form id="messageForm">
+          <div class="form-group">
+            <label>Enter Message</label>
+            <textarea class="form-control" id="message"></textarea>
+            <br />
+            <input type="submit" class="btn btn-success" value="Send" />
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <script>
+      $(function() {
+        var socket = io.connect();
+        var $messageForm = $('#messageForm');
+        var $message = $('#message');
+        var $chat = $('#chat');
+        var $users = $('#users');
+
+        var $loginForm = $('#loginForm');
+        var $messageBoard = $('#messageBoard');
+        var $userLogin = $('#userLogin');
+        var $username = $('#username');
+        var $roomselect = $('#roomselect');
+        var $oldRoomNumber = -1;
+        var $newRoomNumber = -1;
+
+        $('#addroom').click(function() {
+          var $roomNumber = $('#roomselect option').length;
+          socket.emit('created new room', $roomNumber);
+        });
+
+        $roomselect.change(function(e) {
+          $('#chatheader').html("You're chatting on room: " + $(this).val());
+          $chat.html("");
+          socket.emit('join room', $(this).val());
+        });
+
+        $messageForm.submit(function(e) {
+          e.preventDefault();
+
+          socket.emit('send message', $message.val());
+          $message.val("");
+        });
+
+        $loginForm.submit(function(e) {
+          e.preventDefault();
+
+          socket.emit('new user', $username.val(), function(data) {
+            if (data) {
+              $userLogin.hide();
+              $messageBoard.show();
+            }
+          });
+          $username.val("");
+        });
+
+        //socket.on('new room', function(data) {
+        //  var $nameOfRoom = "Room number:" + data;
+        //  var $roomNumber = data;
+        //  $('#roomselect').append(new Option($nameOfRoom, $roomNumber, true, true));
+        //});
+
+        socket.on('new message', function(data) {
+          $chat.append('<div class="well"><b>' + data.user + ': </b> ' + data.mssg + '</div>')
+
+          $("#chatContainer").animate({
+            scrollTop: $('#chatContainer').prop("scrollHeight")
+          }, 800);
+
+        });
+
+        socket.on('get rooms', function(data) {
+          var html = '';
+
+          for (i = 0; i < data.length; i++) {
+            html += '<option value="' + data[i] + '"> Room Number: ' + data[i] + '</option>'
+          }
+
+          $('#roomselect').html(html);
+        });
+      });
+    </script>
+</body>
+
+</html>
