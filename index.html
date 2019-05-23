@@ -99,17 +99,20 @@
         var $oldRoomNumber = -1;
         var $newRoomNumber = -1;
 
+        //add a new room to the list of rooms at server level
         $('#addroom').click(function() {
           var $roomNumber = $('#roomselect option').length;
           socket.emit('created new room', $roomNumber);
         });
 
+        //change room
         $roomselect.change(function(e) {
           $('#chatheader').html("You're chatting on room: " + $(this).val());
           $chat.html("");
           socket.emit('join room', $(this).val());
         });
 
+        //submit new message to server
         $messageForm.submit(function(e) {
           e.preventDefault();
 
@@ -117,6 +120,7 @@
           $message.val("");
         });
 
+        //new user data is send and message board is display
         $loginForm.submit(function(e) {
           e.preventDefault();
 
@@ -135,6 +139,7 @@
         //  $('#roomselect').append(new Option($nameOfRoom, $roomNumber, true, true));
         //});
 
+        //this will make a new message appear on the chatroom screen
         socket.on('new message', function(data) {
           $chat.append('<div class="well"><b>' + data.user + ': </b> ' + data.mssg + '</div>')
 
@@ -144,6 +149,7 @@
 
         });
 
+        //this will reset the dropdown to an updated versions of amount of rooms
         socket.on('get rooms', function(data) {
           var html = '';
 
